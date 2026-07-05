@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <link rel="manifest" href="manifest.json" />
+    <meta name="theme-color" content="#0066cc" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="GST AI Pro" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="description" content="Enterprise-grade GST management with AI assistance, offline calculators, and compliance tracking" />
+    <meta name="keywords" content="GST, AI, compliance, calculator, India tax" />
+    <meta name="author" content="GST AI" />
+    <title>GST AI Pro - Professional GST Management</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect fill='%230066cc' width='180' height='180'/><text x='90' y='110' font-size='80' font-weight='bold' fill='white' text-anchor='middle' font-family='Arial'>₹</text></svg>" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.1/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+  </head>
+  <body>
+    <!-- Install Prompt Modal -->
+    <div id="installPrompt" class="install-prompt-modal" style="display: none;">
+      <div class="install-prompt-content">
+        <div class="install-prompt-header">
+          <h2>Install GST AI Pro</h2>
+          <button class="install-close-btn" id="installCloseBtn" type="button">✕</button>
+        </div>
+        <p>Get quick access to your GST management tool. Install on your device for offline access and faster performance.</p>
+        <div class="install-prompt-buttons">
+          <button id="installAppBtn" type="button" class="install-btn-primary">Install App</button>
+          <button id="installLaterBtn" type="button" class="install-btn-secondary">Not Now</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Update Prompt Modal -->
+    <div id="updatePrompt" class="update-prompt-modal" style="display: none;">
+      <div class="update-prompt-content">
+        <div class="update-prompt-header">
+          <h2>Update Available</h2>
+        </div>
+        <p>A new version of GST AI Pro is available with improved features and security updates.</p>
+        <div class="update-prompt-buttons">
+          <button id="updateNowBtn" type="button" class="update-btn-primary">Update Now</button>
+          <button id="updateLaterBtn" type="button" class="update-btn-secondary">Later</button>
+        </div>
+      </div>
+    </div>
+
+    <main class="app-shell">
+      <!-- Professional Header -->
+      <header class="app-header">
+        <div class="app-header-content">
+          <div class="app-branding">
+            <div class="app-logo">₹</div>
+            <div>
+              <h1 class="app-title">GST AI Pro</h1>
+              <p class="app-subtitle">Enterprise GST Management Suite</p>
+            </div>
+          </div>
+          <div class="app-header-actions">
+            <button id="offlineModeBtn" class="header-btn" title="Offline Mode">📱</button>
+            <button id="installBtn" class="header-btn install-header-btn" title="Install App" style="display: none;">⬇</button>
+            <button id="settingsBtn" class="header-btn" title="Settings">⚙</button>
+          </div>
+        </div>
+      </header>
+
+      <!-- Tab Navigation -->
+      <div class="tab-navigation">
+        <button class="tab-btn active" data-tab="clients">Clients</button>
+        <button class="tab-btn" data-tab="calculator">Calculator</button>
+        <button class="tab-btn" data-tab="due-dates">📅 Due Dates</button>
+        <button class="tab-btn" data-tab="ask-ai">🤖 Ask GST AI</button>
+        <button class="tab-btn" data-tab="knowledge">📚 Knowledge Base</button>
+        <button class="tab-btn" data-tab="hsn">📄 HSN/SAC</button>
+        <button class="tab-btn" data-tab="interest">💰 Interest & Fee</button>
+        <button class="tab-btn" data-tab="return-prep">📑 Return Prep</button>
+        <button class="tab-btn" data-tab="analytics">📈 Analytics</button>
+        <button class="tab-btn" data-tab="uploads">Uploads</button>
+        <button class="tab-btn" data-tab="dashboard">Dashboard</button>
+        <button class="tab-btn" data-tab="ai">AI Analysis</button>
+      </div>
+
+      <section class="layout-grid">
+        <!-- Clients Tab -->
+        <div id="clients-tab" class="tab-content active">
+          <div class="panel">
+            <div class="panel-header">
+              <h2>Client management</h2>
+              <p>Create, edit, search, and organize GST clients in one place.</p>
+            </div>
+
+            <form id="clientForm" class="stack-form">
+              <input id="editClientId" name="editClientId" type="hidden" />
+              <label>
+                Client name
+                <input id="clientName" name="clientName" required placeholder="Example: Sharma Traders" />
+              </label>
+              <label>
+                GSTIN
+                <input id="gstin" name="gstin" placeholder="22AAAAA0000A1Z5" />
+              </label>
+              <label>
+                Email
+                <input id="email" name="email" type="email" placeholder="contact@company.com" />
+              </label>
+              <label>
+                Portal URL
+                <input id="portalUrl" name="portalUrl" placeholder="https://www.gst.gov.in" />
+              </label>
+              <label>
+                Group
+                <select id="group" name="group">
+                  <option value="Monthly">Monthly</option>
+                  <option value="Quarterly">Quarterly</option>
+                  <option value="Annual">Annual</option>
+                </select>
+              </label>
+              <label>
+                Last filing status
+                <select id="lastFilingStatus" name="lastFilingStatus">
+                  <option value="Pending">Pending</option>
+                  <option value="Filed">Filed</option>
+                  <option value="Delayed">Delayed</option>
+                </select>
+              </label>
+              <label>
+                Pending notices
+                <input id="pendingNotices" name="pendingNotices" type="number" min="0" value="0" />
+              </label>
+              <label>
+                Compliance score
+                <input id="complianceScore" name="complianceScore" type="number" min="0" max="100" value="0" />
+              </label>
+              <label>
+                Notes
+                <textarea id="notes" name="notes" rows="3" placeholder="Centralized filing notes"></textarea>
+              </label>
+              <div class="button-row">
+                <button type="submit">Save client</button>
+                <button id="cancelEdit" class="secondary" type="button">Cancel edit</button>
+              </div>
+              <div id="statusMessage" class="status-message"></div>
+            </form>
+
+            <div class="filters-row">
+              <input id="clientSearch" placeholder="Search clients or GSTIN" />
+              <select id="groupFilter">
+                <option value="All groups">All groups</option>
+                <option value="Monthly">Monthly</option>
+                <option value="Quarterly">Quarterly</option>
+                <option value="Annual">Annual</option>
+              </select>
+            </div>
+
+            <div id="dashboardOutput" class="dashboard-grid"></div>
+            <div id="clientList" class="client-list"></div>
+          </div>
+        </div>
+
+        <!-- GST Calculator Tab -->
+        <div id="calculator-tab" class="tab-content">
+          <div class="panel">
+            <div class="panel-header">
+              <h2>GST Calculator</h2>
+              <p>Quick GST calculations - works offline</p>
+            </div>
+            
+            <div class="calculator-section">
+              <h3>Calculate GST on Amount</h3>
+              <div class="calculator-form">
+                <label>
+                  Net Amount (₹)
+                  <input id="calcAmount" type="number" placeholder="Enter amount" value="1000" />
+                </label>
+                <label>
+                  GST Rate (%)
+                  <select id="calcGstRate">
+                    <option value="0">0% (Exempt)</option>
+                    <option value="5">5%</option>
+                    <option value="12">12%</option>
+                    <option value="18" selected>18%</option>
+                    <option value="28">28%</option>
+                  </select>
+                </label>
+                <div class="calculator-result">
+                  <div class="result-item">
+                    <span>GST Amount:</span>
+                    <strong id="calcGstAmount">₹180.00</strong>
+                  </div>
+                  <div class="result-item">
+                    <span>Total with GST:</span>
+                    <strong id="calcTotalAmount">₹1,180.00</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="calculator-section">
+              <h3>Calculate Amount from Total</h3>
+              <div class="calculator-form">
+                <label>
+                  Total Amount (₹)
+                  <input id="calcTotalInput" type="number" placeholder="Enter total amount" value="1180" />
+                </label>
+                <label>
+                  GST Rate (%)
+                  <select id="calcGstRate2">
+                    <option value="0">0% (Exempt)</option>
+                    <option value="5">5%</option>
+                    <option value="12">12%</option>
+                    <option value="18" selected>18%</option>
+                    <option value="28">28%</option>
+                  </select>
+                </label>
+                <div class="calculator-result">
+                  <div class="result-item">
+                    <span>Net Amount:</span>
+                    <strong id="calcNetAmount">₹1,000.00</strong>
+                  </div>
+                  <div class="result-item">
+                    <span>GST Amount:</span>
+                    <strong id="calcGstAmount2">₹180.00</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="calculator-section">
+              <h3>IGST vs CGST/SGST Breakdown</h3>
+              <div class="calculator-form">
+                <label>
+                  Amount (₹)
+                  <input id="calcIgstAmount" type="number" placeholder="Enter amount" value="1000" />
+                </label>
+                <label>
+                  GST Rate (%)
+                  <select id="calcIgstRate">
+                    <option value="5">5%</option>
+                    <option value="12">12%</option>
+                    <option value="18" selected>18%</option>
+                    <option value="28">28%</option>
+                  </select>
+                </label>
+                <div class="calculator-result">
+                  <div class="result-item">
+                    <span>IGST (Inter-state):</span>
+                    <strong id="calcIgst">₹180.00</strong>
+                  </div>
+                  <div class="result-item">
+                    <span>CGST (Central):</span>
+                    <strong id="calcCgst">₹90.00</strong>
+                  </div>
+                  <div class="result-item">
+                    <span>SGST (State):</span>
+                    <strong id="calcSgst">₹90.00</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- File Uploads Tab -->
+        <div id="uploads-tab" class="tab-content">
+          <div class="panel">
+            <div class="panel-header">
+              <h2>File uploads</h2>
+              <p>Upload PDF, Excel, CSV, and JSON files for GST review and AI analysis.</p>
+            </div>
+
+            <label class="dropzone" for="fileInput">
+              <input id="fileInput" type="file" accept=".pdf,.json,.xlsx,.xls,.csv" multiple />
+              <span>Choose files or drag them here</span>
+            </label>
+
+            <div id="uploadList" class="upload-list"></div>
+
+            <div class="summary-panel">
+              <div class="panel-header">
+                <h3>GST workflow summary</h3>
+                <p>Use the currently selected client and uploaded files.</p>
+              </div>
+              <button id="generateSummary" type="button">Generate summary</button>
+              <div id="summaryOutput" class="summary-output">No summary generated yet.</div>
+            </div>
+
+            <div class="summary-panel">
+              <div class="panel-header">
+                <h3>GST portal integration</h3>
+                <p>Securely connect to authorized GST services for filings and ledger data.</p>
+              </div>
+              <div class="button-row">
+                <button id="connectPortal" type="button">Secure login</button>
+                <button id="refreshPortal" class="secondary" type="button">One-click refresh</button>
+              </div>
+              <div class="portal-actions">
+                <button class="secondary" type="button">Fetch GSTR-1</button>
+                <button class="secondary" type="button">Fetch GSTR-3B</button>
+                <button class="secondary" type="button">Fetch GSTR-2B</button>
+                <button class="secondary" type="button">Fetch GSTR-2A</button>
+                <button class="secondary" type="button">Ledger</button>
+                <button class="secondary" type="button">Liability Ledger</button>
+                <button class="secondary" type="button">Cash Ledger</button>
+                <button class="secondary" type="button">Credit Ledger</button>
+                <button class="secondary" type="button">Notices</button>
+                <button class="secondary" type="button">Filing history</button>
+              </div>
+              <div id="portalOutput" class="summary-output">Portal sync is ready. Connect using secure credentials to retrieve GST data.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dashboard Tab -->
+        <div id="dashboard-tab" class="tab-content">
+          <div class="panel">
+            <div class="panel-header">
+              <h2>GST dashboard</h2>
+              <p>Track pending returns, notices, reconciliation issues, and overall compliance health.</p>
+            </div>
+            <div id="dashboardExtendedOutput" class="dashboard-grid"></div>
+            <div class="chart-row">
+              <div class="chart-card">
+                <h3>Compliance trend</h3>
+                <svg id="complianceChart" class="chart" viewBox="0 0 320 160" role="img" aria-label="Compliance trend chart"></svg>
+              </div>
+              <div class="chart-card">
+                <h3>Filing status</h3>
+                <svg id="filingChart" class="chart" viewBox="0 0 320 160" role="img" aria-label="Filing status chart"></svg>
+              </div>
+            </div>
+            <div class="chart-row">
+              <div class="chart-card">
+                <h3>Pending vs filed</h3>
+                <svg id="pieChart" class="chart" viewBox="0 0 320 160" role="img" aria-label="Pending versus filed pie chart"></svg>
+              </div>
+              <div class="chart-card">
+                <h3>Notice counts</h3>
+                <svg id="noticeChart" class="chart" viewBox="0 0 320 160" role="img" aria-label="Notice counts bar chart"></svg>
+              </div>
+            </div>
+            <div class="chart-card chart-full">
+              <h3>Turnover trend</h3>
+              <svg id="turnoverChart" class="chart" viewBox="0 0 640 180" role="img" aria-label="Turnover trend chart"></svg>
+            </div>
+
+            <div class="panel">
+              <div class="panel-header">
+                <h2>Reports</h2>
+                <p>Generate working reports and export them in PDF, Excel, or CSV format.</p>
+              </div>
+              <div class="portal-actions">
+                <button id="reportGstr1" class="secondary" type="button">GSTR-1 Working</button>
+                <button id="report3b" class="secondary" type="button">3B Working</button>
+                <button id="reportItc" class="secondary" type="button">ITC Report</button>
+                <button id="reportTurnover" class="secondary" type="button">Turnover Report</button>
+                <button id="reportHsn" class="secondary" type="button">HSN Summary</button>
+                <button id="reportVendor" class="secondary" type="button">Vendor Mismatch</button>
+                <button id="reportCustomer" class="secondary" type="button">Customer Mismatch</button>
+                <button id="reportNotice" class="secondary" type="button">Notice Register</button>
+              </div>
+              <div id="reportOutput" class="summary-output">Reports are ready to generate.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI Analysis Tab -->
+        <div id="ai-tab" class="tab-content">
+          <div class="panel">
+            <div class="panel-header">
+              <h2>AI analysis</h2>
+              <p>Ask natural-language questions and get insights from uploaded GST documents and client data.</p>
+            </div>
+            <div id="aiInsightOutput" class="summary-output">Ask questions such as "Why is GSTR-3B liability different from GSTR-1?"</div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <h2>Reconciliation</h2>
+              <p>Automatic comparisons across books, GSTR-1, 2B, 3B, and ledgers.</p>
+            </div>
+            <div id="reconciliationOutput" class="summary-output">No reconciliation run yet.</div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <h2>AI document reader</h2>
+              <p>Extract key details from notices, orders, and registration certificates.</p>
+            </div>
+            <label class="dropzone" for="documentInput">
+              <input id="documentInput" type="file" accept=".pdf,.png,.jpg,.jpeg,.docx" />
+              <span>Upload notice, SCN, order, or GST certificate</span>
+            </label>
+            <div id="documentOutput" class="summary-output">No document analyzed yet.</div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <h2>AI chat</h2>
+              <p>Ask the assistant for pending clients, mismatches, notice replies, and email drafts.</p>
+            </div>
+            <textarea id="chatInput" rows="3" placeholder="Example: Show all pending clients."></textarea>
+            <div class="button-row">
+              <button id="chatSend" type="button">Ask AI</button>
+            </div>
+            <div id="chatOutput" class="summary-output">Type a prompt to get an AI response.</div>
+          </div>
+        </div>
+
+        <!-- Due Dates Tab -->
+        <div id="due-dates-tab" class="tab-content">
+          <div class="panel">
+            <div class="panel-header">
+              <h2>📅 GST Due Dates Calendar</h2>
+              <p>Track important GST filing and payment deadlines at a glance.</p>
+            </div>
+
+            <div class="due-dates-container">
+              <div class="filters-row">
+                <select id="dueDateMonth">
+                  <option value="">All Months</option>
+                  <option value="1">January</option>
+                  <option value="2">February</option>
+                  <option value="3">March</option>
+                  <option value="4">April</option>
+                  <option value="5">May</option>
+                  <option value="6">June</option>
+                  <option value="7">July</option>
+                  <option value="8">August</option>
+                  <option value="9">September</option>
+                  <option value="10">October</option>
+                  <option value="11">November</option>
+                  <option value="12">December</option>
+                </select>
+                <select id="dueDateYear">
+                  <option value="">All Years</option>
+                  <option value="2024">2024</option>
+                  <option value="2025">2025</option>
+                  <option value="2026">2026</option>
+                </select>
+              </div>
+
+              <div class="due-dates-list" id="dueDatesList">
+                <div class="due-date-card urgent">
+                  <div class="due-date-icon">📌</div>
+                  <div class="due-date-content">
+                    <h3>GSTR-3B Filing</h3>
+                    <p>Monthly/Quarterly GST Return</p>
+                  </div>
+                  <div class="due-date-deadline">
+                    <strong>Due: 20th</strong>
+                    <span class="days-left">of next month</span>
+                  </div>
+                </div>
+
+                <div class="due-date-card">
+                  <div class="due-date-icon">📊</div>
+                  <div class="due-date-content">
+                    <h3>GSTR-1 Filing</h3>
+                    <p>Outward Supply Return</p>
+                  </div>
+                  <div class="due-date-deadline">
+                    <strong>Due: 11th</strong>
+                    <span class="days-left">of next month</span>
+                  </div>
+                </div>
+
+                <div class="due-date-card">
+                  <div class="due-date-icon">🏦</div>
+                  <div class="due-date-content">
+                    <h3>Tax Payment</h3>
+                    <p>Quarterly GST Payment</p>
+                  </div>
+                  <div class="due-date-deadline">
+                    <strong>Due: 22nd</strong>
+                    <span class="days-left">of the month</span>
+                  </div>
+                </div>
+
+                <div class="due-date-card">
+                  <div class="due-date-icon">📝</div>
+                  <div class="due-date-content">
+                    <h3>GSTR-2A Filing</h3>
+                    <p>Inward Supply Return</p>
+                  </div>
+                  <div class="due-date-deadline">
+                    <strong>Due: 15th</strong>
+                    <span class="days-left">of next month</span>
+                  </div>
+                </div>
+
+                <div class="due-date-card">
+                  <div class="due-date-icon">📄</div>
+                  <div class="due-date-content">
+                    <h3>Annual Return</h3>
+                    <p>GSTR-9 / GSTR-9A Filing</p>
+                  </div>
+                  <div class="due-date-deadline">
+                    <strong>Due: 31st Dec</strong>
+                    <span class="days-left">Year-end</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ask GST AI Tab -->
+        <div id="ask-ai-tab" class="tab-content">
+          <div class="panel">
+            <div class="panel-header">
+              <h2>🤖 Ask GST AI Assistant</h2>
+              <p>Get instant answers to GST compliance questions powered by AI.</p>
+            </div>
+
+            <div class="ai-chat-container">
+              <div class="ai-chat-box" id="aiChatBox">
+                <div class="ai-message">
+                  <strong>GST AI:</strong> Hello! I'm your GST compliance assistant. Ask me anything about GST filings, rates, calculations, compliance, or regulations.
+                </div>
+              </div>
+
+              <div class="ai-input-section">
+                <textarea id="aiQuestion" rows="3" placeholder="Ask me a GST question... (e.g., 'What is the GST rate for software services?')"></textarea>
+                <button id="aiAskBtn" type="button">💬 Ask AI</button>
+              </div>
+
+              <div class="ai-suggestions">
+                <p>Popular questions:</p>
+                <div class="suggestion-chips">
+                  <button class="chip">What's the GST rate for services?</button>
+                  <button class="chip">How do I claim ITC?</button>
+                  <button class="chip">When should I file GSTR-3B?</button>
+                  <button class="chip">What are reverse charges?</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- GST Knowledge Base Tab -->
+        <div id="knowledge-tab" class="tab-content">
+          <div class="panel">
+            <div class="panel-header">
+              <h2>📚 GST Knowledge Base</h2>
+              <p>Comprehensive guide to GST rules, regulations, and best practices.</p>
+            </div>
+
+            <div class="knowledge-sections">
+              <div class="knowledge-section">
+                <h3>📖 GST Basics</h3>
+                <ul>
+                  <li><strong>What is GST?</strong> - Goods and Services Tax overview</li>
+                  <li><strong>GST Registration</strong> - Eligibility and procedure</li>
+                  <li><strong>GST Rates</strong> - 0%, 5%, 12%, 18%, 28%</li>
+                  <li><strong>Exemptions</strong> - Zero-rated and exempt supplies</li>
+                </ul>
+              </div>
+
+              <div class="knowledge-section">
+                <h3>📋 Returns & Filing</h3>
+                <ul>
+                  <li><strong>GSTR-1</strong> - Outward supplies (Sales)</li>
+                  <li><strong>GSTR-2A</strong> - Inward supplies (Purchases)</li>
+                  <li><strong>GSTR-3B</strong> - Tax return and payment</li>
+                  <li><strong>GSTR-9</strong> - Annual return</li>
+                </ul>
+              </div>
+
+              <div class="knowledge-section">
+                <h3>💡 Tax Credit & Compliance</h3>
+                <ul>
+                  <li><strong>ITC Eligibility</strong> - Input tax credit rules</li>
+                  <li><strong>Reverse Charge</strong> - Mechanism and applicability</li>
+                  <li><strong>E-Invoice</strong> - Electronic invoicing requirements</li>
+                  <li><strong>Record Keeping</strong> - Documentation requirements</li>
+                </ul>
+              </div>
+
+              <div class="knowledge-section">
+                <h3>⚠️ Compliance & Penalties</h3>
+                <ul>
+                  <li><strong>Late Filing Penalty</strong> - ₹100-500 per day</li>
+                  <li><strong>Interest on Tax</strong> - @18% per annum</li>
+                  <li><strong>Notices</strong> - Show cause and demand notices</li>
+                  <li><strong>Audit</strong> - Regular and special audits</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- HSN/SAC Finder Tab -->
+        <div id="hsn-tab" class="tab-content">
+          <div class="panel">
+            <div class="panel-header">
+              <h2>📄 HSN/SAC Code Finder</h2>
+              <p>Find correct HSN/SAC codes for your products and services.</p>
+            </div>
+
+            <div class="hsn-search">
+              <input id="hsnSearch" type="text" placeholder="Search by product name or HSN code..." />
+              <button id="hsnSearchBtn" type="button">🔍 Search</button>
+            </div>
+
+            <div class="hsn-results">
+              <table class="hsn-table">
+                <thead>
+                  <tr>
+                    <th>Product/Service</th>
+                    <th>HSN/SAC Code</th>
+                    <th>GST Rate</th>
+                    <th>ITC Available</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Software Services</td>
+                    <td>9989 / 998312</td>
+                    <td>18%</td>
+                    <td>✓</td>
+                  </tr>
+                  <tr>
+                    <td>Consulting Services</td>
+                    <td>998341</td>
+                    <td>18%</td>
+                    <td>✓</td>
+                  </tr>
+                  <tr>
+                    <td>Computer Hardware</td>
+                    <td>8471</td>
+                    <td>5%</td>
+                    <td>✓</td>
+                  </tr>
+                  <tr>
+                    <td>Medical Equipment</td>
+                    <td>9018</td>
+                    <td>0-12%</td>
+                    <td>✓</td>
+                  </tr>
+                  <tr>
+                    <td>Pharmaceutical Products</td>
+                    <td>3004</td>
+                    <td>0-5%</td>
+                    <td>✓</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Interest & Late Fee Tab -->
+        <div id="interest-tab" class="tab-content">
+          <div class="panel">
+            <div class="panel-header">
+              <h2>💰 Interest & Late Fee Calculator</h2>
+              <p>Calculate GST interest, penalties, and late fees.</p>
+            </div>
+
+            <div class="fee-calculator">
+              <div class="calculator-section">
+                <h3>Late Payment Interest</h3>
+                <div class="calculator-form">
+                  <label>
+                    Outstanding Tax (₹)
+                    <input id="taxAmount" type="number" placeholder="Enter tax amount" value="10000" />
+                  </label>
+                  <label>
+                    Days Delayed
+                    <input id="daysDelayed" type="number" placeholder="Days" value="30" />
+                  </label>
+                  <div class="calculator-result">
+                    <div class="result-item">
+                      <span>Interest Rate: 18% p.a.</span>
+                      <strong id="interestAmount">₹150.00</strong>
+                    </div>
+                    <div class="result-item">
+                      <span>Total Due:</span>
+                      <strong id="totalDue">₹10,150.00</strong>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="calculator-section">
+                <h3>Late Filing Penalty</h3>
+                <div class="calculator-form">
+                  <label>
+                    Penalty Type
+                    <select id="penaltyType">
+                      <option value="100">₹100 per day (Default: ₹25,000 cap)</option>
+                      <option value="500">₹500 per day (Serious: ₹50,000 cap)</option>
+                    </select>
+                  </label>
+                  <label>
+                    Days Late
+                    <input id="daysLate" type="number" placeholder="Days" value="5" />
+                  </label>
+                  <div class="calculator-result">
+                    <div class="result-item">
+                      <span>Penalty Amount:</span>
+                      <strong id="penaltyAmount">₹500.00</strong>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Return Preparation Tab -->
+        <div id="return-prep-tab" class="tab-content">
+          <div class="panel">
+            <div class="panel-header">
+              <h2>📑 Return Preparation Guide</h2>
+              <p>Step-by-step guide to prepare and file GST returns.</p>
+            </div>
+
+            <div class="return-steps">
+              <div class="step-card">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                  <h3>Prepare Documentation</h3>
+                  <p>Gather all invoices, credit notes, debit notes, and payment receipts for the period.</p>
+                  <ul>
+                    <li>Sales invoices (GSTR-1)</li>
+                    <li>Purchase invoices (GSTR-2A)</li>
+                    <li>Credit/Debit notes</li>
+                    <li>Payment records</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="step-card">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                  <h3>Reconcile Records</h3>
+                  <p>Verify that your records match with the portal data.</p>
+                  <ul>
+                    <li>Match invoices with GSTR-2A</li>
+                    <li>Check for mismatches</li>
+                    <li>Verify payment records</li>
+                    <li>Review discrepancies</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="step-card">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                  <h3>Calculate Tax Liability</h3>
+                  <p>Compute the GST liability for the period.</p>
+                  <ul>
+                    <li>Total output tax</li>
+                    <li>Less: Input tax credit</li>
+                    <li>Net tax payable</li>
+                    <li>Add: Interest (if any)</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="step-card">
+                <div class="step-number">4</div>
+                <div class="step-content">
+                  <h3>File Return</h3>
+                  <p>File GSTR-3B before the due date.</p>
+                  <ul>
+                    <li>Login to GST portal</li>
+                    <li>Fill GSTR-3B form</li>
+                    <li>Verify details</li>
+                    <li>Submit & get ARN</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="step-card">
+                <div class="step-number">5</div>
+                <div class="step-content">
+                  <h3>Make Payment</h3>
+                  <p>Pay the due tax and file confirmation.</p>
+                  <ul>
+                    <li>Initiate tax payment</li>
+                    <li>Complete payment online</li>
+                    <li>Get payment confirmation</li>
+                    <li>File final return</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="step-card">
+                <div class="step-number">6</div>
+                <div class="step-content">
+                  <h3>Archive Records</h3>
+                  <p>Maintain records for audit purposes.</p>
+                  <ul>
+                    <li>Save filed returns</li>
+                    <li>Keep payment receipts</li>
+                    <li>Preserve documents</li>
+                    <li>For 6 years minimum</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- GST Analytics Tab -->
+        <div id="analytics-tab" class="tab-content">
+          <div class="panel">
+            <div class="panel-header">
+              <h2>📈 GST Analytics & Insights</h2>
+              <p>Deep dive into your GST data with professional analytics.</p>
+            </div>
+
+            <div class="analytics-grid">
+              <div class="analytics-card">
+                <h3>📊 Filing Consistency</h3>
+                <div class="metric-large">95%</div>
+                <p>On-time filing record</p>
+              </div>
+
+              <div class="analytics-card">
+                <h3>💰 Tax Collection Efficiency</h3>
+                <div class="metric-large">98%</div>
+                <p>Tax collected vs. reported</p>
+              </div>
+
+              <div class="analytics-card">
+                <h3>🎯 ITC Recovery Rate</h3>
+                <div class="metric-large">87%</div>
+                <p>Input credit claimed vs. eligible</p>
+              </div>
+
+              <div class="analytics-card">
+                <h3>⚠️ Compliance Score</h3>
+                <div class="metric-large">92/100</div>
+                <p>Overall GST compliance</p>
+              </div>
+            </div>
+
+            <div class="analytics-chart">
+              <h3>Monthly Tax Trend</h3>
+              <svg class="chart" viewBox="0 0 640 200" role="img" aria-label="Monthly tax trend chart"></svg>
+            </div>
+
+            <div class="analytics-insights">
+              <h3>Key Insights</h3>
+              <ul>
+                <li>✓ Your quarterly payment is on schedule</li>
+                <li>⚠ ITC variance detected in June - requires review</li>
+                <li>✓ No pending compliance issues</li>
+                <li>📈 Tax collection trend is positive</li>
+                <li>✓ All filings current and complete</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="./app.js"></script>
+    <script type="module" src="./pwa-manager.js"></script>
+  </body>
+</html>
